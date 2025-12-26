@@ -51,8 +51,8 @@ function updateProgress() {
 
   const img = document.getElementById("progressImage");
   const txt = document.getElementById("progressText");
-
-  if (percent === 0.01) {
+//   console.log(percent);
+  if (percent < 0.02) {
     img.src = "../assets/sad.png";
     txt.innerText = "Time to preheat...";
   } else if (percent < 0.5) {

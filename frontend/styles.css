@@ -21,11 +21,6 @@ body {
   height: 100vh;
 }
 
-button {
-  padding: 10px;
-  font-size: 16px;
-}
-
 video, canvas {
   width: 320px;
 }
@@ -56,4 +51,6 @@ video, canvas {
   padding: 10px 20px;
   font-size: 16px;
   cursor: pointer;
+  background-color: burlywood;
+  border-radius: 20px
 }

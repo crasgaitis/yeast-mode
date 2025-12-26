@@ -7,11 +7,95 @@
 
 <style>
     #yeastmode {
-        width: 200px; display: block; margin: 0 auto; border: 10px white solid; border-radius: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        width: 200px; display: block; margin: 0 auto; border: 10px white solid; border-radius: 20px;
+        box-shadow: 0 0 10px #948057;
     }
-    body { overflow-y: hidden; }
+    body { overflow-y: hidden; background: linear-gradient(to bottom, #CCBB99, #fff7e6);}
     p {margin-top: 0; padding-top: 0}
     h1 {margin-bottom: 0}
+
+    body {
+    cursor: none;
+    }
+
+    #butter-cursor {
+    position: fixed;
+    pointer-events: none;
+    font-size: 40px;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    }
+
+    .toast {
+    position: fixed;
+    top: -100px;
+    pointer-events: none;
+    z-index: -1;
+    animation-name: fall;
+    animation-timing-function: linear;
+    }
+
+    @keyframes fall {
+        from {
+        transform: translateY(0);
+        }
+        to {
+        transform: translateY(120vh);
+        }
+    }
+
+    .melt-line {
+    position: fixed;
+    height: 6px;
+    background: linear-gradient(
+        90deg,
+        rgba(255,245,200,0),
+        #ffe08a 20%,
+        #f5c400 80%,
+        rgba(245,196,0,0)
+    );
+    border-radius: 3px;
+    pointer-events: none;
+    filter: blur(0.6px);
+    transform-origin: left center;
+    animation: melt 1.2s ease-out forwards;
+    filter: blur(1px) saturate(120%);
+
+    }
+
+    @keyframes melt {
+    40% {
+        filter: blur(1px);
+    }
+    100% {
+        transform:
+        translateY(12px)
+        scaleY(2.2)
+        skewX(8deg)
+        scaleY(var(--stretch))
+        scaleX(var(--squish))
+        translateY(var(--drop));
+        opacity: 0;
+        filter: blur(5px);
+        
+    }
+    }
+
+    .button-row button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: burlywood;
+    border-radius: 20px;
+    border: 5px solid #e0d2bf;
+    }
+
+    .button-row button:hover {
+        background-color: #e0d2bf;
+        border: 5px solid burlywood;
+
+    }
+
 </style>
 
 </head>
@@ -29,6 +113,60 @@
     my to do list is gluten out of hand
   </button>
 </div>
+<div id="butter-cursor">🧈</div>
+
+<script src="mousetrail.js"></script>
+
+<script>
+  const TOAST_SRC = "assets/toast_yay.png";
+
+  const lanes = 12; // number of horizontal slots (prevents overlap)
+  const laneWidth = window.innerWidth / lanes;
+  const activeLanes = new Array(lanes).fill(false);
+
+  function spawnToast() {
+    // find a free lane
+    const freeLanes = activeLanes
+      .map((v, i) => v ? null : i)
+      .filter(v => v !== null);
+
+    if (freeLanes.length === 0) return;
+
+    const lane = freeLanes[Math.floor(Math.random() * freeLanes.length)];
+    activeLanes[lane] = true;
+
+    const toast = document.createElement("img");
+    toast.src = TOAST_SRC;
+    toast.className = "toast";
+
+    const depth = Math.random();
+
+    const size = 80 - depth * 40; 
+    const opacity = 1 - depth * 0.6;
+    const duration = 6 + depth * 6;
+
+    toast.style.width = `${size}px`;
+    toast.style.opacity = opacity;
+    toast.style.left = `${lane * laneWidth + Math.random() * (laneWidth - size)}px`;
+    toast.style.animationDuration = `${duration}s`;
+
+    document.body.appendChild(toast);
+
+    toast.addEventListener("animationend", () => {
+      toast.remove();
+      activeLanes[lane] = false;
+    });
+  }
+
+  function randomSpawner() {
+    spawnToast();
+    const next = 400 + Math.random() * 1100; // random timing
+    setTimeout(randomSpawner, next);
+  }
+
+  randomSpawner();
+</script>
+
 
 </body>
 </html>

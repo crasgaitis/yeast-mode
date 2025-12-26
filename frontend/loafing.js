@@ -1,3 +1,70 @@
+// safer audio alarm helpers
+let audioCtx = null;
+let alarmOsc = null;
+let alarmGain = null;
+let alarmPlaying = false;
+let audioAvailable = true;
+
+function ensureAudio() {
+  if (!audioAvailable || audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (e) {
+    console.error("AudioContext init failed:", e);
+    audioAvailable = false;
+  }
+}
+
+// init audio
+const initAudioOnGesture = () => ensureAudio();
+if (document.body) {
+  document.body.addEventListener("click", initAudioOnGesture, { once: true });
+} else {
+  window.addEventListener("DOMContentLoaded", () => {
+    document.body.addEventListener("click", initAudioOnGesture, { once: true });
+  }, { once: true });
+}
+
+function playAlarm() {
+  if (!audioAvailable || alarmPlaying) return;
+  try {
+    ensureAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    alarmOsc = audioCtx.createOscillator();
+    alarmGain = audioCtx.createGain();
+    alarmOsc.type = "sine";
+    alarmOsc.frequency.value = 880;
+    alarmGain.gain.value = 0.05;
+    alarmOsc.connect(alarmGain);
+    alarmGain.connect(audioCtx.destination);
+    alarmOsc.start();
+    alarmPlaying = true;
+  } catch (e) {
+    console.error("playAlarm error:", e);
+    audioAvailable = false;
+  }
+}
+
+function stopAlarm() {
+  if (!alarmPlaying) return;
+  try {
+    if (alarmOsc) {
+      try { alarmOsc.stop(); } catch (_) {}
+      alarmOsc.disconnect();
+      alarmOsc = null;
+    }
+    if (alarmGain) {
+      alarmGain.disconnect();
+      alarmGain = null;
+    }
+  } catch (e) {
+    console.error("stopAlarm error:", e);
+  } finally {
+    alarmPlaying = false;
+  }
+}
+
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -26,11 +93,6 @@ captureFocusBtn.addEventListener("click", () => capture("focus"));
 captureLoafBtn.addEventListener("click", () => capture("loaf"));
 submitBtn.addEventListener("click", submitCalibration);
 
-// ---- FaceMesh (ONE instance)
-// locateFile points to the local vendor directory so the WASM and packed assets
-// are loaded from the site. If you didn't vendor the files, the HTML falls
-// back to CDN for the main scripts, but it's best to vendor the wasm/assets
-// into `frontend/vendor/mediapipe` for reliable hosting (see scripts/vendor_mediapipe.ps1).
 const faceMesh = new FaceMesh({
   locateFile: f => `vendor/mediapipe/${f}`
 });
@@ -79,9 +141,11 @@ function drawLoop() {
     if (currentOpenness < threshold) {
       stateImage.src = "../assets/loafing.png";
       stateText.innerText = "Stop loafing 🍞";
+      playAlarm();
     } else {
       stateImage.src = "../assets/focus.png";
       stateText.innerText = "Locked in 🔥";
+      stopAlarm();
     }
   }
 

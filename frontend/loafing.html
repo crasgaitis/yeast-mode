@@ -5,7 +5,6 @@
   // Ensure Emscripten Module is initialized BEFORE Mediapipe scripts load.
   window.Module = window.Module || {};
   Module.arguments = Module.arguments || [];
-  // On Vercel we serve static files under /frontend/, so locate assets there.
   Module.locateFile = Module.locateFile || function(path) { return '/frontend/vendor/mediapipe/' + path; };
   console.log('Module.locateFile ->', Module.locateFile('face_mesh_solution_simd_wasm_bin.wasm'));
 </script>
@@ -24,10 +23,20 @@
       display: flex;
       gap: 10px;
     }
-    button {
+    
+    .specbutton {
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+    background-color: burlywood;
+    border-radius: 20px;
+    border: 5px solid #e0d2bf;
+    }
+
+    .specbutton:hover {
+        background-color: #e0d2bf;
+        border: 5px solid burlywood;
+
     }
 
     #stateImage {
@@ -64,16 +73,14 @@
 <!-- <div id="videoToggleContainer" style="display:none; margin-top:10px;"></div> -->
 
 <div id="controls">
-  <button id="captureFocus">Capture Locked In</button>
-  <button id="captureLoaf">Capture Loafing</button>
-  <button id="submitCalibration">Submit</button>
+  <button class = 'specbutton' id="captureFocus">Capture Locked In</button>
+  <button class = 'specbutton' id="captureLoaf">Capture Loafing</button>
+  <button class = 'specbutton' id="submitCalibration">Submit</button>
 </div>
 
 <img id="stateImage" src="assets/idle.png" alt="State Image">
 <p id="stateText">Calibration not done</p>
 
-<!-- Mediapipe libraries -->
-<!-- Mediapipe loader will use Module.locateFile set above -->
 <!-- Try to load vendor-hosted Mediapipe first; fall back to CDN on error -->
 <script>
   (function(){
