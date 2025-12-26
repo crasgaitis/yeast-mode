@@ -12,7 +12,6 @@ let frozenLandmarksLoaf = null;
 let focusValue = null;
 let loafValue = null;
 let threshold = null;
-
 let faceReady = false;
 
 const captureFocusBtn = document.getElementById("captureFocus");
@@ -27,10 +26,13 @@ captureFocusBtn.addEventListener("click", () => capture("focus"));
 captureLoafBtn.addEventListener("click", () => capture("loaf"));
 submitBtn.addEventListener("click", submitCalibration);
 
-//new
+// ---- FaceMesh (ONE instance)
+// locateFile points to the local vendor directory so the WASM and packed assets
+// are loaded from the site. If you didn't vendor the files, the HTML falls
+// back to CDN for the main scripts, but it's best to vendor the wasm/assets
+// into `frontend/vendor/mediapipe` for reliable hosting (see scripts/vendor_mediapipe.ps1).
 const faceMesh = new FaceMesh({
-  locateFile: f =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+  locateFile: f => `vendor/mediapipe/${f}`
 });
 
 faceMesh.setOptions({
@@ -41,7 +43,6 @@ faceMesh.setOptions({
 faceMesh.onResults(results => {
   if (results.multiFaceLandmarks?.length) {
     lastLandmarks = results.multiFaceLandmarks[0];
-
     if (!faceReady) {
       faceReady = true;
       captureFocusBtn.disabled = false;
@@ -51,15 +52,48 @@ faceMesh.onResults(results => {
   }
 });
 
+// ---- Camera
 navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
   video.srcObject = stream;
 });
+
+// ---- Flicker-free render loop
+function drawLoop() {
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  if (lastLandmarks) {
+    drawEyes(lastLandmarks, "red");
+  }
+
+  if (frozenLandmarksFocus) drawEyes(frozenLandmarksFocus, "lime");
+  if (frozenLandmarksLoaf) drawEyes(frozenLandmarksLoaf, "lime");
+
+  if (threshold !== null && lastLandmarks) {
+    const currentOpenness =
+      (eyeOpenness(lastLandmarks, LEFT) +
+       eyeOpenness(lastLandmarks, RIGHT)) / 2;
+
+    const stateImage = document.getElementById("stateImage");
+    const stateText = document.getElementById("stateText");
+
+    if (currentOpenness < threshold) {
+      stateImage.src = "../assets/loafing.png";
+      stateText.innerText = "Stop loafing 🍞";
+    } else {
+      stateImage.src = "../assets/focus.png";
+      stateText.innerText = "Locked in 🔥";
+    }
+  }
+
+  requestAnimationFrame(drawLoop);
+}
+
 
 video.addEventListener("loadedmetadata", () => {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
 
-    const camera = new Camera(video, {
+  const camera = new Camera(video, {
     onFrame: async () => {
       if (video.readyState >= 2) {
         await faceMesh.send({ image: video });
@@ -70,134 +104,43 @@ video.addEventListener("loadedmetadata", () => {
   });
 
   camera.start();
-  drawLoop();   // start your render loop once
+  drawLoop();
 });
 
-
-//old
-
-//  webcam
-navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-    video.srcObject = stream;
-
-    video.addEventListener("loadedmetadata", () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // init Mediapipe FaceMesh
-        const faceMesh = new FaceMesh({
-            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
-        });
-
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
-
-        // update landmarks here
-        faceMesh.onResults(results => {
-            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                lastLandmarks = results.multiFaceLandmarks[0];
-
-                if (!faceReady) {
-                    faceReady = true;
-                    captureFocusBtn.disabled = false;
-                }
-            } else {
-                lastLandmarks = null; // no face 
-            }
-        });
-
-        // media pipe cam to feed frames
-        const camera = new Camera(video, {
-            onFrame: async () => {
-                if (video.readyState >= 2) await faceMesh.send({ image: video });
-            },
-            width: video.videoWidth,
-            height: video.videoHeight
-        });
-        camera.start();
-
-        // // Flicker free ver
-        // function drawLoop() {
-        //     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        //     // console.log(lastLandmarks)
-        //     if (lastLandmarks) {
-        //         // drawAllLandmarks(lastLandmarks, "rgba(255,0,0,0.3)");
-        //         drawEyes(lastLandmarks, "red");
-        //     }
-
-        //     //  frozen calibration frames
-        //     if (frozenLandmarksFocus) drawEyes(frozenLandmarksFocus, "lime");
-        //     if (frozenLandmarksLoaf) drawEyes(frozenLandmarksLoaf, "lime");
-
-        //     if (threshold !== null && lastLandmarks) {
-        //         const currentOpenness = (eyeOpenness(lastLandmarks, LEFT) + eyeOpenness(lastLandmarks, RIGHT)) / 2;
-
-        //         const stateImage = document.getElementById("stateImage");
-        //         const stateText = document.getElementById("stateText");
-
-        //         if (currentOpenness < threshold) {
-        //             stateImage.src = "../assets/loafing.png";
-        //             stateText.innerText = "Stop loafing 🍞";
-        //         } else {
-        //             stateImage.src = "../assets/focus.png";
-        //             stateText.innerText = "Locked in 🔥";
-        //         }
-        //     }
-
-        //     requestAnimationFrame(drawLoop);
-        // }
-
-        drawLoop();
-    });
-});
-
-// eyes only
+// ---- Helpers
 function drawEyes(lm, color = "red") {
-    ctx.fillStyle = color;
-    [LEFT.u, LEFT.l, RIGHT.u, RIGHT.l].forEach(i => {
-        const p = lm[i];
-        if (!p) return;
-        ctx.beginPath();
-        ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
-        ctx.fill();
-    });
+  ctx.fillStyle = color;
+  [LEFT.u, LEFT.l, RIGHT.u, RIGHT.l].forEach(i => {
+    const p = lm[i];
+    if (!p) return;
+    ctx.beginPath();
+    ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  });
 }
 
-// all landmarks faintly
-function drawAllLandmarks(lm, color = "rgba(255,0,0,0.3)") {
-    ctx.fillStyle = color;
-    lm.forEach(p => {
-        if (!p) return;
-        ctx.beginPath();
-        ctx.arc(p.x * canvas.width, p.y * canvas.height, 1.5, 0, 2 * Math.PI);
-        ctx.fill();
-    });
-}
-
-// calibration
 function capture(type) {
-    if (!lastLandmarks) return;
+  if (!lastLandmarks) return;
 
-    if (type === "focus") {
-        frozenLandmarksFocus = lastLandmarks.map(p => ({ x: p.x, y: p.y, z: p.z }));
-        focusValue = (eyeOpenness(lastLandmarks, LEFT) + eyeOpenness(lastLandmarks, RIGHT)) / 2;
-        captureFocusBtn.disabled = true;
-        captureLoafBtn.disabled = false;
-    } else if (type === "loaf") {
-        frozenLandmarksLoaf = lastLandmarks.map(p => ({ x: p.x, y: p.y, z: p.z }));
-        loafValue = (eyeOpenness(lastLandmarks, LEFT) + eyeOpenness(lastLandmarks, RIGHT)) / 2;
-        captureLoafBtn.disabled = true;
-        submitBtn.disabled = false;
-    }
+  if (type === "focus") {
+    frozenLandmarksFocus = lastLandmarks.map(p => ({ ...p }));
+    focusValue = (eyeOpenness(lastLandmarks, LEFT) + eyeOpenness(lastLandmarks, RIGHT)) / 2;
+    captureFocusBtn.disabled = true;
+    captureLoafBtn.disabled = false;
+  } else {
+    frozenLandmarksLoaf = lastLandmarks.map(p => ({ ...p }));
+    loafValue = (eyeOpenness(lastLandmarks, LEFT) + eyeOpenness(lastLandmarks, RIGHT)) / 2;
+    captureLoafBtn.disabled = true;
+    submitBtn.disabled = false;
+  }
 }
 
 function submitCalibration() {
-    if (focusValue !== null && loafValue !== null) {
-        threshold = (focusValue + loafValue) / 2;
-        document.getElementById("controls").remove();
-        document.getElementById("stateText").innerText = "Calibration complete 🔥";
-    }
+  threshold = (focusValue + loafValue) / 2;
+  document.getElementById("controls").remove();
+  document.getElementById("stateText").innerText = "Calibration complete 🔥";
 }
 
 function eyeOpenness(lm, eye) {
-    return Math.abs(lm[eye.u].y - lm[eye.l].y);
+  return Math.abs(lm[eye.u].y - lm[eye.l].y);
 }

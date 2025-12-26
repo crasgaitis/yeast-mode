@@ -47,7 +47,7 @@
 </head>
 <body>
 
-<h2>No Loafing Zone 🍞</h2>
+<h2>no more loafing</h2>
 
 <!-- <video id="video" autoplay playsinline style="display:none;"></video> -->
 <video id="video" autoplay playsinline style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;"></video>
@@ -65,9 +65,40 @@
 <p id="stateText">Calibration not done</p>
 
 <!-- Mediapipe libraries -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+<!-- Provide Emscripten Module arguments before loading Mediapipe -->
+<script>window.Module = window.Module || {}; window.Module.arguments = window.Module.arguments || [];</script>
+<!-- Try to load vendor-hosted Mediapipe first; fall back to CDN on error -->
+<script>
+  (function(){
+    function loadWithFallback(src, fallback){
+      return new Promise(function(resolve){
+        var s = document.createElement('script');
+        s.src = src;
+        s.crossOrigin = 'anonymous';
+        s.onload = function(){ resolve(); };
+        s.onerror = function(){
+          if(fallback){
+            var s2 = document.createElement('script');
+            s2.src = fallback;
+            s2.crossOrigin = 'anonymous';
+            s2.onload = function(){ resolve(); };
+            s2.onerror = function(){ resolve(); };
+            document.head.appendChild(s2);
+          } else resolve();
+        };
+        document.head.appendChild(s);
+      });
+    }
 
-<script src="loafing.js"></script>
+    Promise.all([
+      loadWithFallback('vendor/mediapipe/face_mesh.js', 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js'),
+      loadWithFallback('vendor/mediapipe/camera_utils.js', 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')
+    ]).then(function(){
+      var s = document.createElement('script');
+      s.src = 'loafing.js';
+      document.body.appendChild(s);
+    });
+  })();
+</script>
 </body>
 </html>

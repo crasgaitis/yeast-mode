@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gluten Out of Hand</title>
+  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+
+    <style>
+        #taskInput {
+            padding: 10px;
+            font-size: 16px;
+            width: 400px;
+            border-radius: 10px
+        }
+
+        ul {
+            display: flex;
+            list-style-type: none;
+            padding: 0;
+            flex-direction: column;
+            align-items: center; 
+        }
+
+        ul li {
+            width: 100%;      
+            max-width: 60%;    
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 5px 0;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+
+        ul li button {
+            margin-left: auto;
+            cursor: pointer;
+            border: 0
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        #progressImage{
+            width: 300px;
+        }
+
+        #progressText{
+            font-size: 20px;
+            margin: 0 auto;
+            padding-bottom: 5px;
+        }
+    </style>
+
+</head>
+<body>
+
+<h2>My to-dough list</h2>
+
+<p id="progressText"></p>
+<img id="progressImage" src="../assets/sad.png">
+
+<h3>Progress </h3>
+<div class="bar" style = 'max-width: 50vw; border-radius: 20px'>
+  <div id="fill" style = 'border-radius: 20px'></div>
+</div>
+
+<input id="taskInput" placeholder="add task">
+<button onclick="addTask()">Add</button>
+
+<ul id="list"></ul>
+
+
+<script src="todo.js"></script>
+</body>
+</html>

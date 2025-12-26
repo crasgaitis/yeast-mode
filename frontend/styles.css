@@ -32,6 +32,7 @@ video, canvas {
 
 .bar {
   width: 80%;
+  max-width: 400px;
   height: 20px;
   background: #ddd;
   margin: 20px auto;
