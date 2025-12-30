@@ -51,6 +51,69 @@
             margin: 0 auto;
             padding-bottom: 5px;
         }
+
+        .controls {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        }
+
+        .arrows {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        }
+
+        .controls button {
+        border: 0;
+        cursor: pointer;
+        background: none;
+        font-size: 14px;
+        padding: 2px 4px;
+        }
+
+        .controls button:hover {
+            color: darkred;
+            font-weight: bold
+
+        }
+
+        .arrows button:hover{
+            color: rgb(81, 81, 183);
+        }
+
+        .task-text {
+            flex: 1;
+            padding-left: 5px;
+            text-align: left
+        }
+
+        .section {
+            font-weight: bold;
+            position: relative;
+        }
+
+        .edit-color {
+            margin-left: auto;
+            display: none;
+            background: none;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .section:hover .edit-color {
+            display: inline;
+        }
+
+        .section .controls {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+        .section-text{
+            text-align: left; margin-left: 5px
+        }
     </style>
 
 </head>
@@ -66,8 +129,10 @@
   <div id="fill" style = 'border-radius: 20px'></div>
 </div>
 
-<input id="taskInput" placeholder="add task">
-<button onclick="addTask()">Add</button>
+<input id="taskInput" placeholder="add task or section">
+<button onclick="addTask()">Add Task</button>
+<button onclick="addSection()">Add Section</button>
+
 
 <ul id="list"></ul>
 
