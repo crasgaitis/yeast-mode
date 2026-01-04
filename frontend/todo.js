@@ -30,6 +30,7 @@ function addSection() {
     color: nextSectionColor()
   });
 
+  document.getElementById("taskInput").value = "";
   save();
   render();
 }
@@ -53,6 +54,7 @@ function addTask() {
     color
   });
 
+  document.getElementById("taskInput").value = "";
   save();
   render();
 }
@@ -245,16 +247,18 @@ function getInheritedColor(index) {
 }
 
 function updateProgress() {
-  const done = todos.filter(t => t.done).length;
-  const percent = todos.length
-  ? Math.max(done / todos.length, 0.01)
-  : 0;
+  const tasks = todos.filter(t => t.type === "task");
+  const doneTasks = tasks.filter(t => t.done);
+
+  const percent = tasks.length
+    ? Math.max(doneTasks.length / tasks.length, 0.01)
+    : 0;
 
   document.getElementById("fill").style.width = `${percent * 100}%`;
 
   const img = document.getElementById("progressImage");
   const txt = document.getElementById("progressText");
-//   console.log(percent);
+
   if (percent < 0.02) {
     img.src = "../assets/sad.png";
     txt.innerText = "Time to preheat...";
@@ -269,5 +273,45 @@ function updateProgress() {
     txt.innerText = "Fully baked 🥖";
   }
 }
+
+function importList() {
+  document.getElementById("importModal").classList.remove("hidden");
+  document.getElementById("importTextarea").value = "";
+}
+
+function closeImport() {
+  document.getElementById("importModal").classList.add("hidden");
+}
+
+function submitImport() {
+  const textarea = document.getElementById("importTextarea");
+  const lines = textarea.value
+    .split("\n")
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  if (!lines.length) return;
+
+  const sectionColor = nextSectionColor();
+  todos.push({
+    type: "section",
+    text: "Imported List",
+    color: sectionColor
+  });
+
+  lines.forEach(text => {
+    todos.push({
+      type: "task",
+      text,
+      done: false,
+      color: sectionColor
+    });
+  });
+
+  save();
+  render();
+  closeImport();
+}
+
 
 render();

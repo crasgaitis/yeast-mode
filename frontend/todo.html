@@ -114,6 +114,71 @@
         .section-text{
             text-align: left; margin-left: 5px
         }
+
+        .spec {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: burlywood;
+        border-radius: 20px;
+        border: 5px solid #e0d2bf;
+        }
+
+        .spec:hover {
+            background-color: #e0d2bf;
+            border: 5px solid burlywood;
+        }
+
+        #import {
+            background-color: rgb(164, 208, 217);
+            border-color: rgb(100, 121, 133)
+        }
+
+        #import:hover {
+            background-color: rgb(100, 121, 133);
+            border-color: rgb(164, 208, 217);
+            color: white
+        }
+
+        .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        }
+
+        .hidden {
+        display: none;
+        }
+
+        .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        }
+
+        .modal-content textarea {
+        min-height: 150px;
+        resize: vertical;
+        padding: 10px;
+        font-size: 14px;
+        }
+
+        .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        }
+
     </style>
 
 </head>
@@ -129,13 +194,25 @@
   <div id="fill" style = 'border-radius: 20px'></div>
 </div>
 
+<button type='button' onclick="importList()" class = 'spec' id = 'import'>Import</button>
 <input id="taskInput" placeholder="add task or section">
-<button onclick="addTask()">Add Task</button>
-<button onclick="addSection()">Add Section</button>
-
+<button type='button' onclick="addTask()" class = 'spec'>Add Task</button>
+<button type='button' onclick="addSection()" class = 'spec'>Add Section</button>
 
 <ul id="list"></ul>
 
+<div id="importModal" class="modal hidden">
+  <div class="modal-content">
+    <h3 style>Import your ingredients...</h3>
+
+    <textarea id="importTextarea" placeholder="task one&#10;task two&#10;task three"></textarea>
+
+    <div class="modal-buttons">
+      <button class="spec" onclick="submitImport()">Submit</button>
+      <button class="spec" onclick="closeImport()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script src="todo.js"></script>
 </body>
